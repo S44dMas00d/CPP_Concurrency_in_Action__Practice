@@ -1,0 +1,87 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            // Debugs whichever target is selected in the CMake Tools status
+            // bar ("Set Launch/Debug Target"). Preferred config: each exercise
+            // is its own executable under build/chNN_.../<name>/, so a
+            // ${fileDirname}-based program path (fine for single-file LeetCode
+            // solutions) does not apply here.
+            "name": "Debug selected CMake target",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${command:cmake.launchTargetPath}",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    // Keep going after the first race report and symbolize the
+                    // stacks; halt_on_error=0 is what makes a TSAN run list
+                    // every race rather than dying on one.
+                    "name": "TSAN_OPTIONS",
+                    "value": "halt_on_error=0:second_deadlock_stack=1"
+                }
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "preLaunchTask": "cmake build",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    // Without this, every thread creation/exit stops the
+                    // program — unusable in a concurrency repo.
+                    "description": "Don't stop on library-internal thread signals",
+                    "text": "handle SIGCHLD nostop noprint pass",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            // Fallback when CMake Tools has no target selected: pick the
+            // driver from a list. Add a line to the "options" array below as
+            // each new exercise gets its own driver executable.
+            "name": "Debug a driver (pick from list)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/${input:driverPath}",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "TSAN_OPTIONS",
+                    "value": "halt_on_error=0:second_deadlock_stack=1"
+                }
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "preLaunchTask": "cmake build",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ],
+    "inputs": [
+        {
+            "id": "driverPath",
+            "type": "pickString",
+            "description": "Which driver to debug?",
+            "options": [
+                "ch02_managing_threads/thread_guard/thread_guard_driver",
+                "ch04_synchronizing_concurrent_operations/threadsafe_queue/threadsafe_queue_driver"
+            ],
+            "default": "ch02_managing_threads/thread_guard/thread_guard_driver"
+        }
+    ]
+}

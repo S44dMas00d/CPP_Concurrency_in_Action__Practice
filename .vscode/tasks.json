@@ -1,0 +1,35 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "cmake build",
+            "type": "shell",
+            "command": "cmake -S ${workspaceFolder} -B ${workspaceFolder}/build -G Ninja && cmake --build ${workspaceFolder}/build -j",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            // TSAN is ON by default in CMakeLists.txt. A sanitized binary is
+            // the point for most of these exercises, but data-race repros and
+            // timing experiments sometimes need the plain build — this task
+            // reconfigures the same tree with -DENABLE_TSAN=OFF.
+            "label": "cmake build (no TSAN)",
+            "type": "shell",
+            "command": "cmake -S ${workspaceFolder} -B ${workspaceFolder}/build -G Ninja -DENABLE_TSAN=OFF && cmake --build ${workspaceFolder}/build -j",
+            "group": "build",
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            // Formats every tracked header/source in place using the repo's
+            // .clang-format — a one-shot catch-up for files last saved before
+            // formatOnSave was configured.
+            "label": "clang-format all",
+            "type": "shell",
+            "command": "find ${workspaceFolder}/ch* -name '*.[ch]pp' -print0 | xargs -0 -r /usr/bin/clang-format -i --style=file",
+            "problemMatcher": []
+        }
+    ]
+}

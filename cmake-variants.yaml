@@ -1,0 +1,41 @@
+# CMake Tools reads this file automatically (no settings.json entry needed)
+# and exposes it as the "variant" picker in the status bar. Switching variants
+# reconfigures the same build/ directory with a different -DENABLE_TSAN value
+# and triggers a full rebuild (every object's compile flags changed) — cheap
+# for a repo this size, and the only way to keep one build/ directory instead
+# of juggling several (see build-toolchain-guide.md §1.4 on CMakeCache
+# stickiness for why an explicit -D beats relying on the cached default).
+#
+# The axis below MUST be named "buildType" — CMake Tools treats that name as
+# special and always feeds one buildType-named axis into CMAKE_BUILD_TYPE.
+# Two wrong things were tried before landing here, kept as a note so neither
+# gets retried:
+#   1. Naming this axis "buildType" but leaving CMAKE_BUILD_TYPE unset per
+#      choice: CMake Tools silently defaulted BOTH choices to
+#      CMAKE_BUILD_TYPE=Debug, so the cache looked identical (and looked
+#      broken) no matter which one was actually selected.
+#   2. Renaming the axis away from "buildType" entirely (e.g. "sanitizer"):
+#      CMake Tools does not treat a custom axis as a replacement — it just
+#      falls back to injecting its OWN built-in buildType axis (default
+#      choice: Debug) alongside the custom one, so CMAKE_BUILD_TYPE=Debug
+#      still showed up regardless, from a different source. The Output panel
+#      even names this: "Missing setting buildType in variant definition."
+# The fix is to keep the axis named "buildType" AND give each choice its own
+# explicit buildType: value, so the two configurations are actually
+# distinguishable in the cache instead of both reading "Debug".
+buildType:
+  default: sanitize
+  description: TSAN race-hunting vs. debugger-friendly stepping
+  choices:
+    sanitize:
+      short: Sanitize
+      long: "-O1, TSAN on (ENABLE_TSAN=ON) — the default for running/testing a build task"
+      buildType: Sanitize
+      settings:
+        ENABLE_TSAN: true
+    debug:
+      short: Debug
+      long: "-O0, TSAN off (ENABLE_TSAN=OFF) — full symbol fidelity: no reordering, no eliding locals, no 'optimized out'"
+      buildType: Debug
+      settings:
+        ENABLE_TSAN: false
